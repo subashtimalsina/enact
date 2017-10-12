@@ -977,7 +977,7 @@ const VideoPlayerBase = class extends React.Component {
 		if (this.state.mediaControlsVisible && !this.state.feedbackVisible) {
 			this.setState({feedbackVisible: true});
 		} else if (!this.state.mediaControlsVisible) {
-			const shouldShowSlider = this.pulsedPlaybackState !== null || calcNumberValueOfPlaybackRate(this.playbackRate) !== 1;
+			const shouldShowSlider = this.pulsedPlaybackState !== null || calcNumberValueOfPlaybackRate(this.video.playbackRate) !== 1;
 
 			if (this.showMiniFeedback && (!this.state.miniFeedbackVisible || this.state.mediaSliderVisible !== shouldShowSlider)) {
 				this.setState({
@@ -1018,7 +1018,7 @@ const VideoPlayerBase = class extends React.Component {
 
 	handle = handle.bind(this)
 
-	startListeningForPulses = (keyCode) => () => {
+	startListeningForPulses = (keyCode) => {
 		// Ignore new pulse calls if key code is same, otherwise start new series if we're pulsing
 		if (this.pulsing && keyCode !== this.pulsingKeyCode) {
 			this.stopListeningForPulses();
@@ -1061,7 +1061,7 @@ const VideoPlayerBase = class extends React.Component {
 				!this.state.mediaControlsVisible &&
 				(is('left', ev.keyCode) || is('right', ev.keyCode))) {
 			Spotlight.pause();
-			this.startListeningForPulses(ev.keyCode)();
+			this.startListeningForPulses(ev.keyCode);
 		}
 		return true;
 	}
@@ -1793,7 +1793,7 @@ const VideoPlayerBase = class extends React.Component {
 					<div className={css.fullscreen + ' enyo-fit scrim'} {...controlsAriaProps}>
 						<FeedbackContent
 							className={css.miniFeedback}
-							playbackRate={this.pulsedPlaybackRate || this.selectPlaybackRate(this.speedIndex)}
+							playbackRate={this.pulsedPlaybackRate || this.video.playbackRate}
 							playbackState={this.pulsedPlaybackState || this.prevCommand}
 							visible={this.state.miniFeedbackVisible && !noMiniFeedback}
 						>
@@ -1839,7 +1839,7 @@ const VideoPlayerBase = class extends React.Component {
 								<FeedbackTooltip
 									noFeedback={!this.state.feedbackIconVisible}
 									playbackState={this.prevCommand}
-									playbackRate={this.selectPlaybackRate(this.speedIndex)}
+									playbackRate={this.video.playbackRate}
 									thumbnailDeactivated={this.props.thumbnailUnavailable}
 									thumbnailSrc={thumbnailSrc}
 									visible={this.state.feedbackVisible}
