@@ -1189,7 +1189,11 @@ const VideoPlayerBase = class extends React.Component {
 
 	reloadVideo = () => {
 		// When changing a HTML5 video, you have to reload it.
+		this.stopListeningForPulses();
 		this.video.load();
+		this.speedIndex = 0;
+		this.stopRewindJob();
+		this.prevCommand = 'play';
 		this.setState({
 			announce: AnnounceState.READY
 		});
