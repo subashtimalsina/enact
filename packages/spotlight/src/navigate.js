@@ -1,67 +1,104 @@
+const tolerance = 5;
+const toleranceAdjustment = () => (-1 * tolerance);
 
 function prioritize (priorities) {
-	let destPriority = null;
-	for (let i = 0; i < priorities.length; i++) {
-		if (priorities[i].group.length) {
-			destPriority = priorities[i];
-			break;
+	const destGroup = [];
+
+	for (let index = 0; index < priorities.length; index++) {
+		const destPriority = priorities[index];
+
+		if (destPriority.group.length) {
+			const destDistance = destPriority.distance;
+			const destDifference = destPriority.difference;
+			let difference = 0;
+			let target;
+
+			destPriority.group.sort(function (a, b) {
+				for (let i = 0; i < destDistance.length; i++) {
+					const distance = destDistance[i];
+					const delta = distance(a) - distance(b);
+					if (delta) {
+						return delta;
+					}
+				}
+				return 0;
+			});
+
+			// we're only worried about calculating the difference for the 1st item, since it's
+			// the top priority target in the designated group
+			target = destPriority.group[0];
+			for (let i = 0; i < destDifference.length; i++) {
+				difference += destDifference[i](target);
+			}
+
+			destGroup.push({difference,	target});
 		}
 	}
 
-	if (!destPriority) {
+	if (!destGroup.length) {
 		return null;
 	}
 
-	const destDistance = destPriority.distance;
-
-	destPriority.group.sort(function (a, b) {
-		for (let i = 0; i < destDistance.length; i++) {
-			const distance = destDistance[i];
-			const delta = distance(a) - distance(b);
-			if (delta) {
-				return delta;
-			}
-		}
-		return 0;
+	destGroup.sort(function (a, b) {
+		return a.difference - b.difference;
 	});
 
-	return destPriority.group;
+	return destGroup;
 }
 
-function partition (rects, targetRect, straightOverlapThreshold) {
+function partition (rects, targetRect, straightOverlapThreshold, measureFromCenter) {
 	// a matrix of elements where the center of the element in relation to targetRect is:
-	let groups = [
+	const groups = [
 		[/* [0] => above/left */],  [/* [1] => above/within */],     [/* [2] => above/right */],
 		[/* [3] => within/left */], [/* [4] => within */],           [/* [5] => within/right */],
 		[/* [6] => below/left */],  [/* [7] => below and within */], [/* [8] => below/right */]
 	];
 
 	for (let i = 0; i < rects.length; i++) {
-		let rect = rects[i];
-		let center = rect.center;
+		const rect = rects[i];
 		let x, y, groupId;
 
-		if (center.x < targetRect.left) {
-			x = 0;
-		} else if (center.x <= targetRect.right) {
-			x = 1;
-		} else {
-			x = 2;
-		}
+		if (measureFromCenter) {
+			const center = rect.center;
 
-		if (center.y < targetRect.top) {
-			y = 0;
-		} else if (center.y <= targetRect.bottom) {
-			y = 1;
+			if (center.x < targetRect.left) {
+				x = 0;
+			} else if (center.x <= targetRect.right) {
+				x = 1;
+			} else {
+				x = 2;
+			}
+
+			if (center.y < targetRect.top) {
+				y = 0;
+			} else if (center.y <= targetRect.bottom) {
+				y = 1;
+			} else {
+				y = 2;
+			}
 		} else {
-			y = 2;
+			if (rect.right <= targetRect.left + tolerance) {
+				x = 0;
+			} else if (rect.left < targetRect.right - tolerance) {
+				x = 1;
+			} else {
+				x = 2;
+			}
+
+			if (rect.bottom <= targetRect.top) {
+				y = 0;
+			} else if (rect.top < targetRect.bottom) {
+				y = 1;
+			} else {
+				y = 2;
+			}
 		}
 
 		groupId = y * 3 + x;
 		groups[groupId].push(rect);
 
 		if ([0, 2, 6, 8].indexOf(groupId) !== -1) {
-			let threshold = straightOverlapThreshold;
+			const threshold = straightOverlapThreshold;
 
 			if (rect.left <= targetRect.right - targetRect.width * threshold) {
 				if (groupId === 2) {
@@ -120,12 +157,30 @@ function generateDistancefunction (targetRect) {
 			}
 			return d < 0 ? 0 : d;
 		},
+		nearTargetBottomIsBetter: function (rect) {
+			let d;
+			if (rect.center.y < targetRect.center.y) {
+				d = targetRect.bottom - rect.top;
+			} else {
+				d = rect.top - targetRect.bottom;
+			}
+			return d < 0 ? 0 : d;
+		},
 		nearTargetLeftIsBetter: function (rect) {
 			let d;
 			if (rect.center.x < targetRect.center.x) {
 				d = targetRect.left - rect.right;
 			} else {
 				d = rect.left - targetRect.left;
+			}
+			return d < 0 ? 0 : d;
+		},
+		nearTargetRightIsBetter: function (rect) {
+			let d;
+			if (rect.center.x < targetRect.center.x) {
+				d = targetRect.right - rect.left;
+			} else {
+				d = rect.left - targetRect.right;
 			}
 			return d < 0 ? 0 : d;
 		},
@@ -169,7 +224,8 @@ function navigate (targetRect, direction, rects, config) {
 	let internalGroups = partition(
 		groups[4],
 		targetRect.center,
-		config.straightOverlapThreshold
+		config.straightOverlapThreshold,
+		true
 	);
 
 	let priorities;
@@ -181,22 +237,47 @@ function navigate (targetRect, direction, rects, config) {
 					group: internalGroups[0].concat(internalGroups[3]).concat(internalGroups[6]),
 					distance: [
 						distanceFunction.nearPlumbLineIsBetter,
+						distanceFunction.nearHorizonIsBetter,
 						distanceFunction.topIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetLeftIsBetter
 					]
 				},
 				{
 					group: groups[3],
 					distance: [
 						distanceFunction.nearPlumbLineIsBetter,
+						distanceFunction.nearHorizonIsBetter,
 						distanceFunction.topIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetLeftIsBetter,
+						toleranceAdjustment
 					]
 				},
 				{
-					group: groups[0].concat(groups[6]),
+					group: groups[0],
 					distance: [
 						distanceFunction.nearHorizonIsBetter,
 						distanceFunction.rightIsBetter,
 						distanceFunction.nearTargetTopIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetLeftIsBetter,
+						distanceFunction.nearTargetTopIsBetter
+					]
+				},
+				{
+					group: groups[6],
+					distance: [
+						distanceFunction.nearHorizonIsBetter,
+						distanceFunction.rightIsBetter,
+						distanceFunction.nearTargetTopIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetLeftIsBetter,
+						distanceFunction.nearTargetBottomIsBetter
 					]
 				}
 			];
@@ -207,22 +288,47 @@ function navigate (targetRect, direction, rects, config) {
 					group: internalGroups[2].concat(internalGroups[5]).concat(internalGroups[8]),
 					distance: [
 						distanceFunction.nearPlumbLineIsBetter,
+						distanceFunction.nearHorizonIsBetter,
 						distanceFunction.topIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetRightIsBetter
 					]
 				},
 				{
 					group: groups[5],
 					distance: [
 						distanceFunction.nearPlumbLineIsBetter,
+						distanceFunction.nearHorizonIsBetter,
 						distanceFunction.topIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetRightIsBetter,
+						toleranceAdjustment
 					]
 				},
 				{
-					group: groups[2].concat(groups[8]),
+					group: groups[2],
 					distance: [
 						distanceFunction.nearHorizonIsBetter,
 						distanceFunction.leftIsBetter,
 						distanceFunction.nearTargetTopIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetRightIsBetter,
+						distanceFunction.nearTargetTopIsBetter
+					]
+				},
+				{
+					group: groups[8],
+					distance: [
+						distanceFunction.nearHorizonIsBetter,
+						distanceFunction.leftIsBetter,
+						distanceFunction.nearTargetTopIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetRightIsBetter,
+						distanceFunction.nearTargetBottomIsBetter
 					]
 				}
 			];
@@ -233,22 +339,47 @@ function navigate (targetRect, direction, rects, config) {
 					group: internalGroups[0].concat(internalGroups[1]).concat(internalGroups[2]),
 					distance: [
 						distanceFunction.nearHorizonIsBetter,
+						distanceFunction.nearPlumbLineIsBetter,
 						distanceFunction.leftIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetTopIsBetter
 					]
 				},
 				{
 					group: groups[1],
 					distance: [
 						distanceFunction.nearHorizonIsBetter,
+						distanceFunction.nearPlumbLineIsBetter,
 						distanceFunction.leftIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetTopIsBetter,
+						toleranceAdjustment
 					]
 				},
 				{
-					group: groups[0].concat(groups[2]),
+					group: groups[0],
 					distance: [
 						distanceFunction.nearPlumbLineIsBetter,
 						distanceFunction.bottomIsBetter,
 						distanceFunction.nearTargetLeftIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetTopIsBetter,
+						distanceFunction.nearTargetLeftIsBetter
+					]
+				},
+				{
+					group: groups[2],
+					distance: [
+						distanceFunction.nearPlumbLineIsBetter,
+						distanceFunction.bottomIsBetter,
+						distanceFunction.nearTargetLeftIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetTopIsBetter,
+						distanceFunction.nearTargetRightIsBetter
 					]
 				}
 			];
@@ -259,22 +390,47 @@ function navigate (targetRect, direction, rects, config) {
 					group: internalGroups[6].concat(internalGroups[7]).concat(internalGroups[8]),
 					distance: [
 						distanceFunction.nearHorizonIsBetter,
+						distanceFunction.nearPlumbLineIsBetter,
 						distanceFunction.leftIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetBottomIsBetter
 					]
 				},
 				{
 					group: groups[7],
 					distance: [
 						distanceFunction.nearHorizonIsBetter,
+						distanceFunction.nearPlumbLineIsBetter,
 						distanceFunction.leftIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetBottomIsBetter,
+						toleranceAdjustment
 					]
 				},
 				{
-					group: groups[6].concat(groups[8]),
+					group: groups[6],
 					distance: [
 						distanceFunction.nearPlumbLineIsBetter,
 						distanceFunction.topIsBetter,
 						distanceFunction.nearTargetLeftIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetBottomIsBetter,
+						distanceFunction.nearTargetLeftIsBetter
+					]
+				},
+				{
+					group: groups[8],
+					distance: [
+						distanceFunction.nearPlumbLineIsBetter,
+						distanceFunction.topIsBetter,
+						distanceFunction.nearTargetLeftIsBetter
+					],
+					difference: [
+						distanceFunction.nearTargetBottomIsBetter,
+						distanceFunction.nearTargetRightIsBetter
 					]
 				}
 			];
@@ -284,7 +440,7 @@ function navigate (targetRect, direction, rects, config) {
 	}
 
 	if (config.straightOnly) {
-		priorities.pop();
+		priorities.splice(2, 2);
 	}
 
 	let destGroup = prioritize(priorities);
@@ -292,7 +448,7 @@ function navigate (targetRect, direction, rects, config) {
 		return null;
 	}
 
-	return destGroup[0].element;
+	return destGroup[0].target.element;
 }
 
 export default navigate;
