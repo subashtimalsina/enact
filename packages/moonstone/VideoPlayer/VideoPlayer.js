@@ -169,7 +169,7 @@ const AnnounceState = {
  * @ui
  * @public
  */
-const VideoPlayerBase = class extends React.Component {
+const VideoPlayerBase = class extends React.PureComponent {
 	static displayName = 'VideoPlayerBase'
 
 	static contextTypes = contextTypes
@@ -649,8 +649,6 @@ const VideoPlayerBase = class extends React.Component {
 		this.selectPlaybackRates('fastForward');
 		this.sliderKnobProportion = 0;
 
-		this.initI18n();
-
 		// Generate event handling forwarders and a smooth block to pass to <Video>
 		for (let key in handledMediaEventsMap) {
 			const eventName = handledMediaEventsMap[key];
@@ -729,7 +727,7 @@ const VideoPlayerBase = class extends React.Component {
 				this.state.mediaControlsVisible
 			);
 
-		this.initI18n();
+		window.requestIdleCallback(this.initI18n);
 
 		if (
 			this.state.mediaControlsVisible &&
