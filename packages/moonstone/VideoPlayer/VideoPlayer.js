@@ -706,7 +706,6 @@ const VideoPlayerBase = class extends React.Component {
 		on('keyup', this.handleKeyUp);
 		this.attachCustomMediaEvents();
 		this.startDelayedFeedbackHide();
-		this.renderBottomControl.idle();
 		this.calculateMaxComponentCount();
 	}
 
@@ -788,6 +787,7 @@ const VideoPlayerBase = class extends React.Component {
 		this.stopListeningForPulses();
 		this.sliderTooltipTimeJob.stop();
 		this.slider5WayPressJob.stop();
+		this.setDurFmt.stop();
 	}
 
 	//
@@ -828,10 +828,13 @@ const VideoPlayerBase = class extends React.Component {
 
 		if (this.locale !== locale && typeof window === 'object') {
 			this.locale = locale;
-
-			this.durfmt = new DurationFmt({length: 'medium', style: 'clock', useNative: false});
+			this.setDurFmt.idle();
 		}
 	}
+
+	setDurFmt = new Job(() => {
+		this.durfmt = new DurationFmt({length: 'medium', style: 'clock', useNative: false});
+	})
 
 	attachCustomMediaEvents = () => {
 		for (let eventName in this.handledCustomMediaForwards) {
@@ -1738,6 +1741,13 @@ const VideoPlayerBase = class extends React.Component {
 		}
 	}
 
+	handlePlay = () => {
+		forward('onPlay');
+		if (!this.bottomControlsRendered) {
+			this.renderBottomControl.idle();
+		}
+	}
+
 	renderBottomControl = new Job(() => {
 		this.setState({bottomControlsRendered: true});
 	});
@@ -1832,6 +1842,7 @@ const VideoPlayerBase = class extends React.Component {
 					controls={false}
 					ref={this.setVideoRef}
 					{...this.handledMediaEvents}
+					onPlay={this.handlePlay}
 				>
 					{source}
 				</video>
