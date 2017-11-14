@@ -679,6 +679,7 @@ const VideoPlayerBase = class extends React.Component {
 			volume: 1,
 			titleOffsetHeight: 0,
 			bottomOffsetHeight: 0,
+			seeking: false,
 
 			// Non-standard state computed from properties
 			bottomControlsRendered: false,
@@ -1175,7 +1176,7 @@ const VideoPlayerBase = class extends React.Component {
 			volume: el.volume,
 			playbackRate: el.playbackRate,
 			readyState: el.readyState,
-
+			seeking: el.seeking,
 			// Non-standard state computed from properties
 			proportionLoaded: el.buffered.length && el.buffered.end(el.buffered.length - 1) / el.duration,
 			proportionPlayed: el.currentTime / el.duration,
@@ -1839,7 +1840,7 @@ const VideoPlayerBase = class extends React.Component {
 					bottomControlsVisible={this.state.mediaControlsVisible}
 					onClick={this.onVideoClick}
 				>
-					{this.state.loading ? <Spinner centered /> : null}
+					{this.state.loading || this.state.seeking ? <Spinner centered /> : null}
 				</Overlay>
 
 				{this.state.bottomControlsRendered ?
