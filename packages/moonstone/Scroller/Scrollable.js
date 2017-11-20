@@ -241,6 +241,7 @@ const ScrollableHoC = hoc((config, Wrapped) => {
 			this.verticalScrollbarProps = {
 				ref: this.initRef('verticalScrollbarRef'),
 				vertical: true,
+				hideOtherThumb: this.hideThumb,
 				onPrevScroll: this.onScrollbarButtonClick,
 				onNextScroll: this.onScrollbarButtonClick
 			};
@@ -248,6 +249,7 @@ const ScrollableHoC = hoc((config, Wrapped) => {
 			this.horizontalScrollbarProps = {
 				ref: this.initRef('horizontalScrollbarRef'),
 				vertical: false,
+				hideOtherThumb: this.hideThumb,
 				onPrevScroll: this.onScrollbarButtonClick,
 				onNextScroll: this.onScrollbarButtonClick
 			};

@@ -87,6 +87,14 @@ class ScrollbarBase extends PureComponent {
 		disabled: PropTypes.bool,
 
 		/**
+		 * Called when the scroll thumb is hidden immediately when scroll button is disabled.
+		 *
+		 * @type {Function}
+		 * @private
+		 */
+		hideOtherThumb: PropTypes.func,
+
+		/**
 		 * Called when the scrollbar's down/right button is pressed.
 		 *
 		 * @type {Function}
@@ -138,6 +146,7 @@ class ScrollbarBase extends PureComponent {
 
 	static defaultProps = {
 		corner: false,
+		hideOtherThumb: nop,
 		onNextScroll: nop,
 		onPrevScroll: nop,
 		vertical: true
@@ -207,7 +216,7 @@ class ScrollbarBase extends PureComponent {
 	updateButtons = (bounds) => {
 		const
 			{prevButtonNodeRef, nextButtonNodeRef} = this,
-			{vertical} = this.props,
+			{vertical, hideOtherThumb} = this.props,
 			currentPos = vertical ? bounds.scrollTop : bounds.scrollLeft,
 			maxPos = vertical ? bounds.maxTop : bounds.maxLeft,
 			shouldDisablePrevButton = currentPos <= 0,
@@ -218,6 +227,8 @@ class ScrollbarBase extends PureComponent {
 
 		if (currentPos <= 0 || currentPos >= maxPos) {
 			this.startHidingThumb();
+			// If there is scrollbar as other direction, opposite direction scroll thumb should be also hidden
+			hideOtherThumb();
 		}
 
 		this.setState((prevState) => {
@@ -400,7 +411,7 @@ class ScrollbarBase extends PureComponent {
 }
 
 const Scrollbar = ApiDecorator(
-	{api: ['containerRef', 'hideThumb', 'isThumbFocused', 'showThumb', 'startHidingThumb', 'update']},
+	{api: ['containerRef', 'hideOtherThumb', 'hideThumb', 'isThumbFocused', 'showThumb', 'startHidingThumb', 'update']},
 	DisappearSpotlightDecorator(
 		{events: {
 			onNextSpotlightDisappear: '[data-scroll-button="previous"]',
