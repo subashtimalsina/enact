@@ -87,6 +87,15 @@ class ScrollbarBase extends PureComponent {
 		disabled: PropTypes.bool,
 
 		/**
+		 * When `true`, allows 5-way navigation to the scrollbar controls. By default, 5-way will
+		 * not move focus to the scrollbar controls.
+		 *
+		 * @type {Boolean}
+		 * @public
+		 */
+		focusableScrollbar: PropTypes.bool,
+
+		/**
 		 * Called when the scrollbar's down/right button is pressed.
 		 *
 		 * @type {Function}
@@ -288,20 +297,32 @@ class ScrollbarBase extends PureComponent {
 	}
 
 	handlePrevScroll = (ev) => {
-		const {onPrevScroll, vertical} = this.props;
+		const {focusableScrollbar, vertical} = this.props;
 
-		onPrevScroll({...ev, isPreviousScrollButton: true, isVerticalScrollBar: vertical});
-		if (this.announceRef) {
-			this.announceRef.announce(vertical ? $L('UP') : $L('LEFT'));
+		if (!focusableScrollbar && ev.type !== 'click' && !Spotlight.getPointerMode()) {
+			Spotlight.move(vertical ? 'left' : 'up');
+		} else {
+			const {onPrevScroll, vertical} = this.props;
+
+			onPrevScroll({...ev, isPreviousScrollButton: true, isVerticalScrollBar: vertical});
+			if (this.announceRef) {
+				this.announceRef.announce(vertical ? $L('UP') : $L('LEFT'));
+			}
 		}
 	}
 
 	handleNextScroll = (ev) => {
-		const {onNextScroll, vertical} = this.props;
+		const {focusableScrollbar, vertical} = this.props;
 
-		onNextScroll({...ev, isPreviousScrollButton: false, isVerticalScrollBar: vertical});
-		if (this.announceRef) {
-			this.announceRef.announce(vertical ? $L('DOWN') : $L('RIGHT'));
+		if (!focusableScrollbar && ev.type !== 'click' && !Spotlight.getPointerMode()) {
+			Spotlight.move(vertical ? 'left' : 'up');
+		} else {
+			const {onNextScroll, vertical} = this.props;
+
+			onNextScroll({...ev, isPreviousScrollButton: false, isVerticalScrollBar: vertical});
+			if (this.announceRef) {
+				this.announceRef.announce(vertical ? $L('DOWN') : $L('RIGHT'));
+			}
 		}
 	}
 

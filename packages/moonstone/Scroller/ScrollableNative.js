@@ -229,6 +229,7 @@ const ScrollableHoC = hoc((config, Wrapped) => {
 			this.initContainerRef = this.initRef('containerRef');
 
 			this.verticalScrollbarProps = {
+				focusableScrollbar: props.focusableScrollbar,
 				ref: this.initRef('verticalScrollbarRef'),
 				vertical: true,
 				onPrevScroll: this.onScrollbarButtonClick,
@@ -236,6 +237,7 @@ const ScrollableHoC = hoc((config, Wrapped) => {
 			};
 
 			this.horizontalScrollbarProps = {
+				focusableScrollbar: props.focusableScrollbar,
 				ref: this.initRef('horizontalScrollbarRef'),
 				vertical: false,
 				onPrevScroll: this.onScrollbarButtonClick,
