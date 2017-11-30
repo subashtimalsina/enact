@@ -2,11 +2,12 @@ import {off, on} from '@enact/core/dispatcher';
 import {Announce} from '@enact/ui/AnnounceDecorator';
 import ApiDecorator from '@enact/core/internal/ApiDecorator';
 import classNames from 'classnames';
+import {getTargetByDirectionFromElement} from '@enact/spotlight/src/target';
 import {is} from '@enact/core/keymap';
 import {Job} from '@enact/core/util';
 import PropTypes from 'prop-types';
 import React, {PureComponent} from 'react';
-import Spotlight from '@enact/spotlight';
+import Spotlight, {getDirection} from '@enact/spotlight';
 import ri from '@enact/ui/resolution';
 
 import $L from '../internal/$L';
@@ -34,7 +35,8 @@ const
 	preparePrevButton = prepareButton(true),
 	prepareNextButton = prepareButton(false),
 	isPageUp = is('pageUp'),
-	isPageDown = is('pageDown');
+	isPageDown = is('pageDown'),
+	isEnter = is('enter');
 
 /*
  * Set CSS Varaible value.
@@ -296,40 +298,42 @@ class ScrollbarBase extends PureComponent {
 		};
 	}
 
+	isNeededToSkipKeyHandling = () => {
+		const {focusableScrollbar} = this.props;
+
+		return (!focusableScrollbar && !Spotlight.getPointerMode()) ? true : false;
+	}
+
 	handlePrevScroll = (ev) => {
-		const {focusableScrollbar, vertical} = this.props;
+		const {onPrevScroll, vertical} = this.props;
 
-		if (!focusableScrollbar && ev.type !== 'click' && !Spotlight.getPointerMode()) {
-			Spotlight.move(vertical ? 'left' : 'up');
-		} else {
-			const {onPrevScroll, vertical} = this.props;
+		if (this.isNeededToSkipKeyHandling()) {
+			return;
+		}
 
-			onPrevScroll({...ev, isPreviousScrollButton: true, isVerticalScrollBar: vertical});
-			if (this.announceRef) {
-				this.announceRef.announce(vertical ? $L('UP') : $L('LEFT'));
-			}
+		onPrevScroll({...ev, isPreviousScrollButton: true, isVerticalScrollBar: vertical});
+		if (this.announceRef) {
+			this.announceRef.announce(vertical ? $L('UP') : $L('LEFT'));
 		}
 	}
 
 	handleNextScroll = (ev) => {
-		const {focusableScrollbar, vertical} = this.props;
+		const {onNextScroll, vertical} = this.props;
 
-		if (!focusableScrollbar && ev.type !== 'click' && !Spotlight.getPointerMode()) {
-			Spotlight.move(vertical ? 'left' : 'up');
-		} else {
-			const {onNextScroll, vertical} = this.props;
+		if (this.isNeededToSkipKeyHandling()) {
+			return;
+		}
 
-			onNextScroll({...ev, isPreviousScrollButton: false, isVerticalScrollBar: vertical});
-			if (this.announceRef) {
-				this.announceRef.announce(vertical ? $L('DOWN') : $L('RIGHT'));
-			}
+		onNextScroll({...ev, isPreviousScrollButton: false, isVerticalScrollBar: vertical});
+		if (this.announceRef) {
+			this.announceRef.announce(vertical ? $L('DOWN') : $L('RIGHT'));
 		}
 	}
 
 	handlePrevHoldPulse = (ev) => {
 		const {onPrevScroll, vertical} = this.props;
 
-		if (!this.ignoreMode) {
+		if (!this.isNeededToSkipKeyHandling() && !this.ignoreMode) {
 			onPrevScroll({...ev, isPreviousScrollButton: true, isVerticalScrollBar: vertical});
 		}
 	}
@@ -337,13 +341,29 @@ class ScrollbarBase extends PureComponent {
 	handleNextHoldPulse = (ev) => {
 		const {onNextScroll, vertical} = this.props;
 
-		if (!this.ignoreMode) {
+		if (!this.isNeededToSkipKeyHandling() && !this.ignoreMode) {
 			onNextScroll({...ev, isPreviousScrollButton: false, isVerticalScrollBar: vertical});
 		}
 	}
 
-	depressButton = () => {
-		this.setPressStatus(true);
+	depressButton = ({keyCode}) => {
+		const
+			{focusableScrollbar, vertical} = this.props,
+			direction = getDirection(keyCode);
+
+		if (!focusableScrollbar && Spotlight.getPointerMode() && (direction || isEnter(keyCode))) {
+			const
+				current = Spotlight.getCurrent(),
+				target = getTargetByDirectionFromElement(direction, current);
+
+			if (target === null || current === target) {
+				Spotlight.setPointerMode(false);
+				Spotlight.move(vertical ? 'left' : 'up');
+				Spotlight.setPointerMode(true);
+			}
+		} else {
+			this.setPressStatus(true);
+		}
 	}
 
 	releaseButton = (ev) => {
