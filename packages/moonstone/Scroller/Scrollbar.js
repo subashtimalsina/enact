@@ -301,7 +301,7 @@ class ScrollbarBase extends PureComponent {
 	isNeededToSkipKeyHandling = () => {
 		const {focusableScrollbar} = this.props;
 
-		return (!focusableScrollbar && !Spotlight.getPointerMode()) ? true : false;
+		return !focusableScrollbar && !Spotlight.getPointerMode();
 	}
 
 	handlePrevScroll = (ev) => {
