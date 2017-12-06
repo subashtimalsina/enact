@@ -13,7 +13,7 @@ import PropTypes from 'prop-types';
 import Pure from '@enact/ui/internal/Pure';
 
 import {MarqueeController} from '../Marquee';
-import {Picker, PickerItem} from '../internal/Picker';
+import {PickerFactory, PickerItem} from '../internal/Picker';
 import SpottablePicker from '../Picker/SpottablePicker';
 import {validateRange} from '../internal/validators';
 
@@ -28,6 +28,8 @@ const digits = (num) => {
 			num > -1000 && num < 1000 && 3 ||
 			Math.floor(Math.log(Math.abs(num)) * Math.LOG10E) + 1;
 };
+
+const Picker = PickerFactory({css});
 
 /**
  * {@link moonstone/SimpleIntegerPicker.SimpleIntegerPickerBase} is a component that lets the user select a number

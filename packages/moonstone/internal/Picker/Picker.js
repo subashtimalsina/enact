@@ -1,3 +1,4 @@
+import factory from '@enact/core/factory';
 import {forward} from '@enact/core/handle';
 import clamp from 'ramda/src/clamp';
 import equals from 'ramda/src/equals';
@@ -17,9 +18,9 @@ import DisappearSpotlightDecorator from '../DisappearSpotlightDecorator';
 
 import IdProvider from '../IdProvider';
 import $L from '../$L';
-import PickerButton from './PickerButton';
+import {PickerButtonFactory} from './PickerButton';
 
-import css from './Picker.less';
+import componentCss from './Picker.less';
 
 const isDown = is('down');
 const isLeft = is('left');
@@ -67,7 +68,10 @@ const forwardBlur = forward('onBlur'),
  * @private
  */
 
-const PickerBase = class extends React.Component {
+const PickerBaseFactory = factory({css: componentCss}, ({css}) => {
+	const PickerButton = PickerButtonFactory({css});
+
+	return class extends React.Component {
 	static displayName = 'Picker'
 
 	static propTypes = /** @lends moonstone/internal/Picker.Picker.prototype */ {
@@ -347,9 +351,9 @@ const PickerBase = class extends React.Component {
 		this.initContainerRef = this.initRef('containerRef');
 
 		if (__DEV__) {
-			validateRange(props.value, props.min, props.max, PickerBase.displayName);
-			validateStepped(props.value, props.min, props.step, PickerBase.displayName);
-			validateStepped(props.max, props.min, props.step, PickerBase.displayName, '"max"');
+			validateRange(props.value, props.min, props.max, this.displayName);
+			validateStepped(props.value, props.min, props.step, this.displayName);
+			validateStepped(props.max, props.min, props.step, this.displayName, '"max"');
 		}
 
 		// Pressed state for this.handleUp
@@ -368,9 +372,9 @@ const PickerBase = class extends React.Component {
 		const nextValue = nextProps.value;
 
 		if (__DEV__) {
-			validateRange(nextValue, first, last, PickerBase.displayName);
-			validateStepped(nextValue, first, nextProps.step, PickerBase.displayName);
-			validateStepped(last, first, nextProps.step, PickerBase.displayName, '"max"');
+			validateRange(nextValue, first, last, this.displayName);
+			validateStepped(nextValue, first, nextProps.step, this.displayName);
+			validateStepped(last, first, nextProps.step, this.displayName, '"max"');
 		}
 	}
 
@@ -819,21 +823,25 @@ const PickerBase = class extends React.Component {
 			</Div>
 		);
 	}
-};
+	};
+});
 
-const Picker = IdProvider(
+const PickerFactory = (props) => IdProvider(
 	{generateProp: null, prefix: 'p_'},
 	Skinnable(
 		DisappearSpotlightDecorator(
 			{events: {
-				onDecrementSpotlightDisappear: `.${css.incrementer}`,
-				onIncrementSpotlightDisappear: `.${css.decrementer}`
+				onDecrementSpotlightDisappear: `.${componentCss.incrementer}`,
+				onIncrementSpotlightDisappear: `.${componentCss.decrementer}`
 			}},
-			PickerBase
+			PickerBaseFactory(props)
 		)
 	)
 );
 
+// const PickerBase = PickerBaseFactory();
+const Picker = PickerFactory();
+
 export default Picker;
-export {Picker};
+export {Picker, PickerFactory};
 export PickerItem from './PickerItem';

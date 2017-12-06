@@ -1,3 +1,4 @@
+import factory from '@enact/core/factory';
 import kind from '@enact/core/kind';
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -9,9 +10,9 @@ import {withSkinnableProps} from '../../Skinnable';
 
 import Touchable from '../Touchable';
 
-import css from './Picker.less';
+import componentCss from './Picker.less';
 
-const JoinedPickerButtonBase = kind({
+const JoinedPickerButtonBaseFactory = factory({css: componentCss}, ({css}) => kind({
 	name: 'JoinedPickerButtonBase',
 
 	propTypes: {
@@ -27,64 +28,72 @@ const JoinedPickerButtonBase = kind({
 			<Icon className={css.icon} disabled={disabled} small>{icon}</Icon>
 		</span>
 	)
-});
+}));
 
-const JoinedPickerButton = Touchable(JoinedPickerButtonBase);
+const JoinedPickerButtonFactory = (props) => Touchable(JoinedPickerButtonBaseFactory(props));
 
-const PickerButtonBase = kind({
-	name: 'PickerButton',
+const PickerButtonBaseFactory = factory({css: componentCss}, ({css}) => {
+	const JoinedPickerButton = JoinedPickerButtonFactory({css});
 
-	propTypes: {
-		disabled: PropTypes.bool,
-		hidden: PropTypes.bool,
-		icon: PropTypes.oneOfType([
-			PropTypes.string,
-			PropTypes.object
-		]),
-		joined: PropTypes.bool,
-		onSpotlightDisappear: PropTypes.func,
-		skin: PropTypes.string,
-		spotlightDisabled: PropTypes.bool
-	},
+	return kind({
+		name: 'PickerButton',
 
-	styles: {
-		css
-	},
+		propTypes: {
+			disabled: PropTypes.bool,
+			hidden: PropTypes.bool,
+			icon: PropTypes.oneOfType([
+				PropTypes.string,
+				PropTypes.object
+			]),
+			joined: PropTypes.bool,
+			onSpotlightDisappear: PropTypes.func,
+			skin: PropTypes.string,
+			spotlightDisabled: PropTypes.bool
+		},
 
-	computed: {
-		className: ({hidden, styler}) => styler.append({
-			hidden
-		})
-	},
+		styles: {
+			css
+		},
 
-	render: ({disabled, icon, joined, ...rest}) => {
-		if (joined) {
-			delete rest.hidden;
-			delete rest.onSpotlightDisappear;
-			delete rest.skin;
-			delete rest.spotlightDisabled;
+		computed: {
+			className: ({hidden, styler}) => styler.append({
+				hidden
+			})
+		},
 
-			return (
-				<JoinedPickerButton {...rest} icon={icon} disabled={disabled} />
-			);
-		} else {
-			return (
-				<IconButton {...rest} backgroundOpacity="transparent" disabled={disabled} small>
-					{icon}
-				</IconButton>
-			);
+		render: ({disabled, icon, joined, ...rest}) => {
+			if (joined) {
+				delete rest.hidden;
+				delete rest.onSpotlightDisappear;
+				delete rest.skin;
+				delete rest.spotlightDisabled;
+				return (
+					<JoinedPickerButton {...rest} icon={icon} disabled={disabled} />
+				);
+			} else {
+				return (
+					<IconButton {...rest} backgroundOpacity="transparent" disabled={disabled} small>
+						{icon}
+					</IconButton>
+				);
+			}
 		}
-	}
+	});
 });
 
-const PickerButton = Pure(
+const PickerButtonFactory = (props) => Pure(
 	withSkinnableProps(
-		PickerButtonBase
+		PickerButtonBaseFactory(props)
 	)
 );
+
+const PickerButtonBase = PickerButtonBaseFactory();
+const PickerButton = PickerButtonFactory();
 
 export default PickerButton;
 export {
 	PickerButton,
-	PickerButtonBase
+	PickerButtonBase,
+	PickerButtonFactory,
+	PickerButtonBaseFactory
 };
