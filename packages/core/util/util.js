@@ -23,7 +23,8 @@ const unorderedEquals = useWith(equals, [unorderedKeys, unorderedKeys]);
 const orderedEquals = useWith(equals, [orderedKeys, orderedKeys]);
 
 /**
- * Compares the keys of two sets of children and returns `true` if they are equal.
+ * Compares the `key` properties of two sets of children and returns `true` if they are equal. This
+ * does not perform a deep comparison unless there is a single child.
  *
  * @method
  * @memberof core/util
@@ -31,7 +32,8 @@ const orderedEquals = useWith(equals, [orderedKeys, orderedKeys]);
  * @param  {Node[]}		next		Array of children
  * @param  {Boolean}	[ordered]	`true` to require the same order
  *
- * @returns {Boolean}				`true` if the children are the same
+ * @returns {Boolean}				`true` if the children are the same length and have the same
+ *									`key` values
  */
 const childrenEquals = (prev, next, ordered = false) => {
 	const prevChildren = React.Children.toArray(prev);

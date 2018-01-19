@@ -1,5 +1,5 @@
 /**
- * Provides methods to add and remove global event listeners
+ * Provides methods to add and remove global event listeners.
  *
  * @module core/dispatcher
  */
@@ -58,12 +58,12 @@ const dispatcher = function (ev) {
 };
 
 /**
- * Adds a new global event listener
+ * Adds a new global event listener.
  *
  * @function
  * @param	{String}	name				Event name
  * @param	{Function}	fn					Event handler
- * @param	{Node}		[target=`document`]	Event listener target
+ * @param	{Node}		[target='document']	Event listener target
  *
  * @returns {undefined}
  * @memberof core/dispatcher
@@ -80,7 +80,7 @@ const on = function (name, fn, target = getDefaultTarget()) {
 };
 
 /**
- * Removes a global event listener
+ * Removes a global event listener.
  *
  * @function
  * @param	{String}	name				Event name
@@ -105,15 +105,15 @@ const off = function (name, fn, target = getDefaultTarget()) {
 };
 
 /**
- * Adds a new global event listener that removes itself after handling one event
+ * Adds a new global event listener that removes itself after handling one event.
  *
  * @function
  * @param	{String}	name		Event name
  * @param	{Function}	fn			Event handler
  * @param	{Node}		[target]	Event listener target
  *
- * @returns {Function}						The single-use handler which can be passed to `off` to
- *											remove it.
+ * @returns {Function}						The single-use handler. To remove the handler manually, call
+ *											the `off()` function with this as the 2nd parameter.
  * @memberof core/dispatcher
  */
 const once = function (name, fn, target) {
