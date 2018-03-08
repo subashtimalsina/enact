@@ -30,18 +30,12 @@ let pauseCount = 0;
 // Private, exported methods used by Spotlight to set and query the pause state from its public API
 
 function pause () {
-	if (!isPaused()) {
-		Spotlight.pause();
-	}
 	pauseCount++;
 }
 
 function resume () {
 	if (pauseCount > 0) {
 		pauseCount--;
-		if (pauseCount == 0) {
-			Spotlight.resume();
-		}
 	}
 }
 
