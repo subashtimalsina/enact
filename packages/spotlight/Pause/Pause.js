@@ -25,20 +25,28 @@
  * @module spotlight/Pause
  */
 
-let paused = false;
+let pauseCount = 0;
 
 // Private, exported methods used by Spotlight to set and query the pause state from its public API
 
 function pause () {
-	paused = true;
+	if (!isPaused()) {
+		Spotlight.pause();
+	}
+	pauseCount++;
 }
 
 function resume () {
-	paused = false;
+	if (pauseCount > 0) {
+		pauseCount--;
+		if (pauseCount == 0) {
+			Spotlight.resume();
+		}
+	}
 }
 
 function isPaused () {
-	return paused !== false;
+	return pauseCount !== 0;
 }
 
 /**
@@ -61,9 +69,7 @@ class Pause {
 	 * @public
 	 */
 	pause () {
-		if (!isPaused()) {
-			paused = this;
-		}
+		pause();
 	}
 
 	/**
@@ -74,13 +80,8 @@ class Pause {
 	 * @public
 	 */
 	resume () {
-		if (paused === this) {
-			resume();
-
-			return true;
-		}
-
-		return true;
+		resume();
+		return !isPaused();
 	}
 }
 
