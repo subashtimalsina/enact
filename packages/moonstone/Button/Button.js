@@ -51,7 +51,7 @@ const ButtonBase = kind({
 		 * * `'lightTranslucent'`, and
 		 * * `'transparent'`.
 		 *
-		 * @type {String}
+		 * @type {'translucent'|'lightTranslucent'|'transparent'}
 		 * @public
 		 */
 		backgroundOpacity: PropTypes.oneOf(['translucent', 'lightTranslucent', 'transparent']),
@@ -62,7 +62,7 @@ const ButtonBase = kind({
 		 * Accepts one of the following color names, which correspond with the colored buttons on a
 		 * standard remote control: `'red'`, `'green'`, `'yellow'`, `'blue'`.
 		 *
-		 * @type {String}
+		 * @type {'red'|'green'|'yellow'|'blue'}
 		 * @public
 		 */
 		color: PropTypes.oneOf(['red', 'green', 'yellow', 'blue']),
@@ -78,7 +78,7 @@ const ButtonBase = kind({
 		 * * `selected` - Applied to a `selected` button
 		 * * `small` - Applied to a `small` button
 		 *
-		 * @type {Object}
+		 * @type {{button: String, bg: String, selected: String, small: String}}
 		 * @public
 		 */
 		css: PropTypes.object
